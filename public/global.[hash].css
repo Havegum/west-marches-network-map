@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+.wm-network,
+.wm-network p,
+.wm-network h1,
+.wm-network h2,
+.wm-network h3,
+.wm-network h4,
+.wm-network h5,
+.wm-network h6 {
+  font-family: 'Inter', sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.wm-network, button {
+  font-family: inherit;
+  font-size: inherit;
+	color: inherit;
+  border: none;
+}
