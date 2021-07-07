@@ -3,33 +3,38 @@ import { quadtree } from 'd3-quadtree';
 
 export let nodes = [];
 export let links = [];
-export let width = 100;
-export let height = 100;
+let width = 100;
+let height = 100;
+
 export let color = () => 'black';
+export let useBrowser = false;
+
 
 const background = '#2f3437';
+const tau = 2 * Math.PI;
 
 $: w = width / 2;
 $: h = height / 2;
 
 $: tree = quadtree(nodes, n => n.x, n => n.y);
-let hover;
 
-let ctx, timeout;
-$: if (ctx && timeout === undefined) draw(links, nodes, width, height, hover);
+let hover;
+let timeout;
+let contexts = {};
+$: if (contexts.base && timeout === undefined) draw(links, nodes, width, height, hover);
 
 $: resizeTimeout(width, height); 
 
-function resizeTimeout (w, h) {
+function resizeTimeout () {
   clearTimeout(timeout);
   timeout = setTimeout(() => {
     timeout = clearTimeout(timeout)
   }, 100);
 }
 
-const tau = 2 * Math.PI;
-
 function draw (links, nodes, width, height, hover) {
+  drawTop(hover);
+  const ctx = contexts.base;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   
@@ -52,20 +57,11 @@ function draw (links, nodes, width, height, hover) {
   for (let i = 0; i < nodes.length; i++) {
     const n = nodes[i];
     const { x, y } = n;
-    const r = 4 + Math.log(n.degree + 1) * 2.5;
+    const r = 3 + Math.log(n.degree + 1) * 1.5;
     ctx.beginPath();
     ctx.fillStyle = color(n.type);
     ctx.ellipse(x + w, y + h, r, r, 0, 0, tau);
-    
     ctx.fill();
-    if (hover === n.id) {
-      ctx.strokeStyle = color(n.type) + '33';
-      ctx.lineWidth = 14;
-      ctx.stroke();
-      ctx.strokeStyle = '#FFF';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
   }
 
   ctx.lineWidth = 4;
@@ -75,7 +71,6 @@ function draw (links, nodes, width, height, hover) {
 
     ctx.font = '10px Inter, sans-serif';
     ctx.fillStyle = "#FFF9";
-    if (hover === n.id) ctx.fillStyle = "#FFF";
     ctx.strokeStyle = background + 'aa';
     const { width: textWidth } = ctx.measureText(n.name);
     x = x + w - textWidth / 2;
@@ -85,50 +80,111 @@ function draw (links, nodes, width, height, hover) {
   }
 }
 
-function context (canvas) {
-  ctx = canvas.getContext('2d');
+function drawTop (hover) {
+  const ctx = contexts.top;
+  ctx.clearRect(0, 0, width, height);
+  if (!hover) return 
+  
+  let { x, y } = hover;
+
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const n = hover;
+  const r = 15 + Math.log(n.degree + 1) * 1.5;
+  ctx.beginPath();
+  ctx.fillStyle = color(n.type) + '33';
+  ctx.ellipse(x + w, y + h, r, r, 0, 0, tau);
+  ctx.fill();
+
+  ctx.font = '10px Inter, sans-serif';
+  ctx.fillStyle = "#FFF";
+  ctx.strokeStyle = background + 'ff';
+  ctx.lineWidth = 6;
+  const { width: textWidth } = ctx.measureText(hover.name);
+  x = x + w - textWidth / 2;
+  y = y + h + 16;
+  ctx.strokeText(hover.name, x, y);
+  ctx.fillText(hover.name, x, y);
+}
+
+function context (canvas, scope) {
+  contexts[scope] = canvas.getContext('2d');
 }
 
 function handlePointerIn (e) {
-  console.log(e);
 }
 
 function handlePointerOut (e) {
-  console.log(e);
   hover = undefined;
 }
 
 function handlePointerMove (e) {
   const { clientX: x, clientY: y } = e;
-  hover = tree.find(x - w, y - h, 60)?.id;
+  const top = e.target.parentNode.offsetTop;
+  hover = tree.find(x - w, (y - top) - h, 60);
 }
 
 function handlePointerDown (e) {
-  const id = hover;
+  const { clientX: x, clientY: y } = e;
+  hover = tree.find(x - w, y - h, 60);
+  let id = hover?.id;
   if (!id) return;
-  window.open(`https://www.notion.so/${id.replace(/[^a-z0-9]/gi, '')}`, '_blank');
+  id = id.replace(/[^a-z0-9]/gi, '');
+  const protocol = useBrowser ? 'https' : 'notion';
+  let newWindow = window.open(`${protocol}://www.notion.so/${id}`, '_self', 'noopener,noreferrer');
+  if (newWindow) newWindow.opener = null;
 }
 </script>
 
 
-<canvas
-  on:pointerover={handlePointerIn}
-  on:pointerleave={handlePointerOut}
-  on:pointermove={handlePointerMove}
-  on:pointerdown={handlePointerDown}
-  use:context
-  class:clickable={hover !== undefined}
-  {width}
-  {height}
-/>
+<div class="renderer" bind:clientWidth={width} bind:clientHeight={height}>
+
+  <canvas
+    class="base"
+    on:pointerover={handlePointerIn}
+    on:pointerleave={handlePointerOut}
+    on:pointermove={handlePointerMove}
+    on:pointerdown={handlePointerDown}
+    use:context={'base'}
+    class:clickable={hover !== undefined}
+    {width}
+    {height}
+  />
+
+  <canvas
+    {width}
+    {height}
+    class="top" use:context={'top'}
+  />
+</div>
 
 
 <style>
+.renderer {
+  position: relative;
+  height: 100%;
+}
+
 canvas {
 	display: block;
 	margin: 0;
 	padding: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
+
+.top, .debug {
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* .base {
+  opacity: 0;
+} */
 
 .clickable {
   cursor: pointer;

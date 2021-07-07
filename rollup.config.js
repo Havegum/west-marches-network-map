@@ -42,7 +42,7 @@ export default {
 		sourcemap: true,
 		format: 'iife',
 		name: 'app',
-		file: 'build/bundle.[hash].js',
+		file: 'build/bundle.js',
 	},
 
 	onwarn: function (warning, warn) {
@@ -87,7 +87,7 @@ export default {
 			minimize: production,
 			sourceMap: !production,
 			plugins: postcssPlugins,
-			extract: 'bundle.[hash].css',
+			extract: 'bundle.css',
 		}),
 
 		!production && serve({ contentBase: ['build'], port: 5000 }),

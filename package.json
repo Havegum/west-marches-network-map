@@ -29,6 +29,7 @@
     "rollup-plugin-serve": "^1.1.0",
     "rollup-plugin-svelte": "^7.0.0",
     "rollup-plugin-terser": "^7.0.2",
+    "sirv-cli": "^1.0.12",
     "snowpack": "^2.18.2",
     "svelte": "^3.38.2"
   },
@@ -36,7 +37,8 @@
     "dev": "yarn sync && snowpack dev",
     "dev:rollup": "rollup -cw",
     "build": "rimraf build && rollup -c",
-    "sync": "node db-sync.mjs"
+    "sync": "node db-sync.mjs",
+    "deploy": "yarn sync && yarn build && ./deploy.sh"
   },
   "dependencies": {
     "@notionhq/client": "^0.1.8",
@@ -45,6 +47,7 @@
     "d3-quadtree": "^3.0.1",
     "d3-scale": "^3.3.0",
     "d3-scale-chromatic": "^2.0.0",
-    "dotenv": "^10.0.0"
+    "dotenv": "^10.0.0",
+    "sirv": "^1.0.12"
   }
 }

@@ -1,4 +1,4 @@
-import '../public/global.[hash].css';
+import '../public/global.css';
 import App from '@/App.svelte';
 
 

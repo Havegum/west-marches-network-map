@@ -3,3 +3,5 @@ node_modules
 public/bundle.*
 build
 .env
+deploy.sh
+src/data

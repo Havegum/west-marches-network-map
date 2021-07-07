@@ -1,9 +1,13 @@
 import dotenv from 'dotenv';
 import { Client } from '@notionhq/client';
-import { promises as fs } from 'fs';
+import fs from 'fs/promises';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 dotenv.config();
-const dir = 'src/data/';
+const dir = 'src/data';
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
 
 const dbs = [
@@ -35,7 +39,13 @@ const dbs = [
 
 async function sync ({ name, id }) {
   const response = await notion.databases.query({ database_id: id });
-  fs.writeFile(`${dir}/${name}.json`, JSON.stringify(response.results));
+  fs.writeFile(join(__dirname, dir, `${name}.json`), JSON.stringify(response.results));
 }
 
-dbs.forEach(sync);
+function syncAll () {
+  dbs.forEach(sync);
+}
+
+fs.mkdir(join(__dirname, dir))
+  .catch(() => {})
+  .then(syncAll);

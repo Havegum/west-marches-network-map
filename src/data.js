@@ -33,16 +33,21 @@ function generateNodes () {
     name: l.properties.Name.title.map(d => d.plain_text).join('')
   })).filter(d => d.name);
 
-  let sessions = sessionsData.map(s => ({
-    id: s.id,
-    type: 'session',
-    name: s.properties.Name.title.map(d => d.plain_text).join(''),
-    degree: 0,
-    number: s.properties.Session.number,
-  })).filter(d => d.name !== '');
+  let sessions = sessionsData
+    .map(s => ({
+      id: s.id,
+      type: 'session',
+      name: s.properties?.Name.title.map(d => d.plain_text).join(''),
+      degree: 0,
+      number: new Number(s.properties.Session?.number || 0).valueOf(),
+    }))
+    .filter(d => d.name !== '')
+  
+  const validIDs = new Set(persons.concat(factions, items, locations, sessions).map(n => n.id));
 
   const links = [];
   const connect = (source, targetType) => target => {
+    if (!validIDs.has(source.id) || !validIDs.has(target.id)) return;
     source.degree = (source.degree || 0) + 1;
     target.degree = (target.degree || 0) + 1;
     links.push({
@@ -71,7 +76,7 @@ function generateNodes () {
     const s = sessionsData[i].properties;
     let session = sessions[i];
     if (i < sessionsData.length - 1) connect(session, 'session')(sessionsData[i+1]);
-    s['Items found'].relation.forEach(connect(session, 'item'));
+    s['Items revelations'].relation.forEach(connect(session, 'item'));
     s['Locations'].relation.forEach(connect(session, 'location'));
   }
   
